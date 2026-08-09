@@ -25,12 +25,3 @@ The architecture is layered and provider-based: the UI and business logic only e
 
 The 4-month deliverable is a working, fully virtualized proof of concept: a Flutter app with dashboard, alerts, history, and admin screens, backed by a simulated multi-building dataset and a real (but virtual) SCADA control loop demonstrated on one pilot building. Physical hardware deployment, campus-wide rollout, network segmentation (pfSense/WireGuard), OT network monitoring (Zeek), and AI-based analytics are explicitly out of scope for this phase — but the architecture (particularly the `relay_address` field and the Repository/Provider abstraction) is designed so none of it requires a rewrite later.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
