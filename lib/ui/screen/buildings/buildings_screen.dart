@@ -5,6 +5,7 @@ import 'package:scada_app/core/constants/app_route.dart';
 import 'package:scada_app/core/theme/app_colors.dart';
 import 'package:scada_app/core/theme/app_spacing.dart';
 import 'package:scada_app/core/theme/app_typography.dart';
+import 'package:scada_app/core/utils/metric_label.dart';
 import 'package:scada_app/models/role.dart';
 import 'package:scada_app/models/threshold_config.dart';
 import 'package:scada_app/models/user.dart';
@@ -40,19 +41,6 @@ class _BuildingsScreenState extends State<BuildingsScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  (String, String) _metricLabelAndUnit(AlertMetric metric) {
-    switch (metric) {
-      case AlertMetric.voltage:
-        return ('Voltage', 'V');
-      case AlertMetric.current:
-        return ('Current', 'A');
-      case AlertMetric.power:
-        return ('Active power', 'kW');
-      case AlertMetric.powerFactor:
-        return ('Power factor', '');
-    }
   }
 
   @override
@@ -268,7 +256,7 @@ class _BuildingsScreenState extends State<BuildingsScreen>
           for (final config in energy.thresholdsFor(equipment.id)) ...[
             Builder(
               builder: (context) {
-                final (label, unit) = _metricLabelAndUnit(config.metric);
+                final (label, unit) = metricLabelAndUnit(config.metric);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: ThresholdFieldCard(

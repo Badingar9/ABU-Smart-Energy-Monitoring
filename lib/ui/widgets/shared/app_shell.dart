@@ -5,9 +5,11 @@ import 'package:scada_app/core/theme/app_colors.dart';
 import 'package:scada_app/models/role.dart';
 import 'package:scada_app/state/alerts_state.dart';
 import 'package:scada_app/state/user_state.dart';
+import 'package:scada_app/ui/screen/admin/admin_screen.dart';
 import 'package:scada_app/ui/screen/alerts/alerts_screen.dart';
 import 'package:scada_app/ui/screen/buildings/buildings_screen.dart';
 import 'package:scada_app/ui/screen/dashboard/dashboard_screen.dart';
+import 'package:scada_app/ui/screen/history/history_screen.dart';
 import 'package:scada_app/ui/screen/settings/settings_screen.dart';
 
 import 'app_side_nav.dart';
@@ -29,20 +31,14 @@ class AppShell extends StatelessWidget {
   void navigate(BuildContext context, AppRoute route) {
     if (route == selectedRoute) return;
 
-    final Widget? screen = switch (route) {
+    final Widget screen = switch (route) {
       AppRoute.dashboard => const DashboardScreen(),
       AppRoute.buildings => const BuildingsScreen(),
       AppRoute.alerts => const AlertsScreen(),
-      AppRoute.settings => const SettingsScreen(), // handled by SettingsScreen
-      _ => null,
+      AppRoute.settings => const SettingsScreen(),
+      AppRoute.admin => const AdminScreen(),
+      AppRoute.history => const HistoryScreen(), // handled by SettingsScreen
     };
-
-    if (screen == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Screen not yet implemented')),
-      );
-      return;
-    }
 
     Navigator.of(
       context,
