@@ -34,14 +34,16 @@ jobs:
       - name: Builder en mode release
         run: flutter build windows --release
 
-      # Le nom du dossier peut varier légèrement selon la version de Flutter
-      # (souvent build/windows/x64/runner/Release, parfois build/windows/runner/Release)
       - name: Zipper le bundle Windows
         shell: pwsh
         run: |
-          $releaseDir = Get-ChildItem -Path build\windows -Recurse -Directory -Filter "Release" | Select-Object -First 1
+          $releaseDir = "build\windows\x64\runner\Release"
+          if (-not (Test-Path $releaseDir)) {
+            Write-Error "Dossier introuvable: $releaseDir"
+            exit 1
+          }
           $zipName = "ABU-Smart-Energy-Monitoring-${{ github.ref_name }}-windows.zip"
-          Compress-Archive -Path "$($releaseDir.FullName)\*" -DestinationPath $zipName
+          Compress-Archive -Path "$releaseDir\*" -DestinationPath $zipName -Force
           echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
 
       - name: Créer la release GitHub et uploader le zip
