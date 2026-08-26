@@ -1,0 +1,54 @@
+name: Build Windows & Publish Release
+
+# Se déclenche à chaque fois que tu pousses un tag du type v0.2.0, v1.0.0, etc.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write   # nécessaire pour que le workflow puisse créer la release et uploader l'asset
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+
+      - name: Activer le support desktop Windows
+        run: flutter config --enable-windows-desktop
+
+      - name: Vérifier l'installation
+        run: flutter doctor -v
+
+      - name: Récupérer les dépendances
+        run: flutter pub get
+
+      - name: Builder en mode release
+        run: flutter build windows --release
+
+      # Le nom du dossier peut varier légèrement selon la version de Flutter
+      # (souvent build/windows/x64/runner/Release, parfois build/windows/runner/Release)
+      - name: Zipper le bundle Windows
+        shell: pwsh
+        run: |
+          $releaseDir = Get-ChildItem -Path build\windows -Recurse -Directory -Filter "Release" | Select-Object -First 1
+          $zipName = "ABU-Smart-Energy-Monitoring-${{ github.ref_name }}-windows.zip"
+          Compress-Archive -Path "$($releaseDir.FullName)\*" -DestinationPath $zipName
+          echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
+
+      - name: Créer la release GitHub et uploader le zip
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_NAME }}
+          prerelease: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
