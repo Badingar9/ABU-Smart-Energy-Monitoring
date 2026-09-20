@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scada_app/core/theme/app_colors.dart';
+import 'package:scada_app/data/modbus/modbus_tcp_client.dart';
 import 'package:scada_app/data/providers/data_provider.dart';
+import 'package:scada_app/data/providers/real_data_provider.dart';
 import 'package:scada_app/state/settings_state.dart';
 import 'package:scada_app/state/user_state.dart';
 import 'package:scada_app/ui/screen/dashboard/dashboard_screen.dart';
 
-import 'data/providers/fake_data_provider.dart';
 import 'data/repositories/alert_repository.dart';
 import 'data/repositories/energy_data_repository.dart';
 import 'data/repositories/user_repository.dart';
@@ -16,8 +17,20 @@ import 'state/alerts_state.dart';
 import 'state/control_state.dart';
 import 'state/energy_data_state.dart';
 
+
+ bool useRealData = bool.fromEnvironment('USE_REAL_DATA');
+
 void main() {
-  runApp(AbuSmartEnergyApp(dataProvider: FakeDataProvider()));
+
+  final DataProvider provider = RealDataProvider(
+    modbusClient: ModbusTcpClient(
+      host: '192.168.56.100',
+      port: 502,
+      unitId: 1, 
+      )
+  );
+
+  runApp(AbuSmartEnergyApp(dataProvider: provider));
 }
 
 /// Widget racine public — injecte n'importe quel DataProvider (Fake

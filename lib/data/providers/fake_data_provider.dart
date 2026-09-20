@@ -172,7 +172,7 @@ class FakeDataProvider implements DataProvider {
     final equipment = Equipment(
       id: IdGenerator.generate('equipment'),
       buildingId: buildingId,
-      name: name,
+      name: name,  
       category: category,
       controllable: controllable,
       relayAddress: relayAddress,

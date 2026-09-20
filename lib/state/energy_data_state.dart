@@ -59,7 +59,7 @@ class EnergyDataState extends ChangeNotifier {
   double totalActivePowerForBuilding(String buildingId) {
     double total = 0;
     for (final equipment in equipmentsFor(buildingId)) {
-      total += latestReadingFor(equipment.id)?.activePower ?? 0;
+      total += latestReadingFor(equipment.id)?.energyKwh ?? 0;
     }
     return total;
   }
