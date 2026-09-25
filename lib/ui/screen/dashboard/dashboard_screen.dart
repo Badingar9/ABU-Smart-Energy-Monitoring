@@ -30,6 +30,10 @@ class DashboardScreen extends StatelessWidget {
         return Icons.school;
       case BuildingType.laboratory:
         return Icons.engineering;
+      case BuildingType.department:
+        return Icons.business;
+      case BuildingType.faculty:
+        return Icons.business;
     }
   }
 
@@ -47,9 +51,10 @@ class DashboardScreen extends StatelessWidget {
         builder: (context, energy, alertsState, _) {
           final buildings = energy.buildings;
           final pilotBuilding = buildings.firstWhere(
-            (b) => energy.equipmentsFor(b.id).any((e) => e.controllable),
+            (b) => energy.equipmentsForBuilding(b.id).any((e) => e.controllable),
             orElse: () => buildings.first,
           );
+          
           final regularBuildings = buildings
               .where((b) => b.id != pilotBuilding.id)
               .toList();
@@ -91,7 +96,10 @@ class DashboardScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.cardGap),
-                      _buildFeaturedCard(energy, pilotBuilding),
+
+                        
+                        _buildFeaturedCard(energy, pilotBuilding),
+                        
                     ],
                   ),
                 ),
@@ -117,7 +125,7 @@ class DashboardScreen extends StatelessWidget {
     Building building,
   ) {
     final equipmentIds = energy
-        .equipmentsFor(building.id)
+        .equipmentsForBuilding(building.id)
         .map((e) => e.id)
         .toSet();
     final buildingAlerts = alertsState.activeAlerts.where(
@@ -141,7 +149,8 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildFeaturedCard(EnergyDataState energy, Building pilotBuilding) {
-    final trend = energy.buildingPowerTrend(pilotBuilding.id, points: 20);
+    
+        final trend = energy.buildingPowerTrend(pilotBuilding.id, points: 20);
     final trendPercent = trend.length >= 2 && trend.first != 0
         ? ((trend.last - trend.first) / trend.first) * 100
         : 0.0;
@@ -173,7 +182,7 @@ class DashboardScreen extends StatelessWidget {
         group.latest.equipmentId,
       );
       final equipment = energy
-          .equipmentsFor(building?.id ?? '')
+          .equipmentsForBuilding(building?.id ?? '')
           .firstWhereOrNull((e) => e.id == group.latest.equipmentId);
       return AlertRowData(
         alert: group.latest,

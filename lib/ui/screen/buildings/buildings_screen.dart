@@ -6,8 +6,9 @@ import 'package:scada_app/core/theme/app_colors.dart';
 import 'package:scada_app/core/theme/app_spacing.dart';
 import 'package:scada_app/core/theme/app_typography.dart';
 import 'package:scada_app/core/utils/metric_label.dart';
+import 'package:scada_app/data/providers/real_data_provider.dart';
+import 'package:scada_app/models/equipment.dart';
 import 'package:scada_app/models/role.dart';
-import 'package:scada_app/models/threshold_config.dart';
 import 'package:scada_app/models/user.dart';
 import 'package:scada_app/state/alerts_state.dart';
 import 'package:scada_app/state/control_state.dart';
@@ -31,11 +32,29 @@ class BuildingsScreen extends StatefulWidget {
 class _BuildingsScreenState extends State<BuildingsScreen>
     with SingleTickerProviderStateMixin {
   String? _selectedBuildingId;
+  String? _selectedFacilityId;
+  String? _selectedFacilityZone;
   String? _selectedEquipmentIdForHistory;
   late final TabController _tabController = TabController(
     length: 3,
     vsync: this,
   );
+
+  //Get all selected equipment
+  List<Equipment> _selectedEquipments(EnergyDataState energy) {
+    if (_selectedFacilityZone != null) {
+      print(
+        ">>>Selected facility==> ${energy.equipmentsForFacility(_selectedFacilityZone!).length}",
+      );
+      return energy.equipmentsForFacility(_selectedFacilityZone!);
+    }
+
+    if (_selectedBuildingId != null) {
+      return energy.equipmentsForBuilding(_selectedBuildingId!);
+    }
+
+    return const [];
+  }
 
   @override
   void dispose() {
@@ -60,16 +79,35 @@ class _BuildingsScreenState extends State<BuildingsScreen>
             (u) => u.role.type == RoleType.technician,
           );
 
+          final facilitiesList = energy.facilities;
+          _selectedFacilityId ??= facilitiesList.isNotEmpty
+              ? facilitiesList.first.id
+              : null;
+          _selectedFacilityZone ??= facilitiesList.isNotEmpty
+              ? facilitiesList.first.zone.toString()
+              : null;
+
+          final selectedFacility = facilitiesList.firstWhereOrNull(
+            (f) => f.zone.toString() == _selectedFacilityZone,
+          );
+
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               BuildingListPanel(
                 buildings: buildings,
+                facilities: facilitiesList,
                 selectedBuildingId: _selectedBuildingId,
+                selectedFacilityId: _selectedFacilityId,
                 energy: energy,
                 alertsState: alertsState,
                 onSelect: (id) => setState(() {
                   _selectedBuildingId = id;
+                  _selectedEquipmentIdForHistory = null;
+                  _tabController.index = 0;
+                }),
+                onSelectFacility: (facilityId) => setState(() {
+                  _selectedFacilityId = facilityId;
                   _selectedEquipmentIdForHistory = null;
                   _tabController.index = 0;
                 }),
@@ -126,6 +164,7 @@ class _BuildingsScreenState extends State<BuildingsScreen>
                                   energy,
                                   controlState,
                                   selectedBuilding.id,
+                                  selectedFacility!.zone.toString(),
                                   technician,
                                 ),
                                 _buildHistoryTab(energy, selectedBuilding.id),
@@ -151,9 +190,10 @@ class _BuildingsScreenState extends State<BuildingsScreen>
     EnergyDataState energy,
     ControlState controlState,
     String buildingId,
+    String facilityZone,
     AppUser? technician,
   ) {
-    final equipments = energy.equipmentsFor(buildingId);
+    final equipments = _selectedEquipments(energy);
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.containerPadding),
       children: [
@@ -176,7 +216,7 @@ class _BuildingsScreenState extends State<BuildingsScreen>
   }
 
   Widget _buildHistoryTab(EnergyDataState energy, String buildingId) {
-    final equipments = energy.equipmentsFor(buildingId);
+    final equipments = _selectedEquipments(energy);
     _selectedEquipmentIdForHistory ??= equipments.isNotEmpty
         ? equipments.first.id
         : null;
@@ -236,7 +276,7 @@ class _BuildingsScreenState extends State<BuildingsScreen>
     final buildingName =
         energy.buildings.firstWhereOrNull((b) => b.id == buildingId)?.name ??
         '';
-    final equipments = energy.equipmentsFor(buildingId);
+    final equipments = _selectedEquipments(energy);
     final equipmentIds = equipments.map((e) => e.id).toSet();
     final relatedAlerts = alertsState.activeAlerts
         .where((a) => equipmentIds.contains(a.equipmentId))

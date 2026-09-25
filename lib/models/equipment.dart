@@ -1,11 +1,23 @@
 enum EquipmentCategory { ac, lighting, socket, fan, chargingPoint, other }
 
+enum Zone {
+  office,
+  library,
+  laboratory,
+  lectureHall,
+  other;
+
+  @override
+  String toString() => name;
+}
+
 /// Élément électrique individuel supervisé à l'intérieur d'un bâtiment.
 class Equipment {
   final String id;
   final String buildingId;
   final String name;
   final EquipmentCategory category;
+  final Zone zone;
   final bool controllable;
   final String? relayAddress;
   final DateTime createdAt;
@@ -16,6 +28,7 @@ class Equipment {
     required this.buildingId,
     required this.name,
     required this.category,
+    required this.zone,
     this.controllable = false,
     this.relayAddress,
     required this.createdAt,
@@ -27,6 +40,7 @@ class Equipment {
     String? buildingId,
     String? name,
     EquipmentCategory? category,
+    Zone? zone,
     bool? controllable,
     String? relayAddress,
     DateTime? createdAt,
@@ -36,6 +50,7 @@ class Equipment {
     buildingId: buildingId ?? this.buildingId,
     name: name ?? this.name,
     category: category ?? this.category,
+    zone: zone ?? this.zone,
     controllable: controllable ?? this.controllable,
     relayAddress: relayAddress ?? this.relayAddress,
     createdAt: createdAt ?? this.createdAt,
@@ -47,6 +62,7 @@ class Equipment {
     'buildingId': buildingId,
     'name': name,
     'category': category.name,
+    'zone': zone.name,
     'controllable': controllable,
     'relayAddress': relayAddress,
     'createdAt': createdAt.toIso8601String(),
@@ -58,6 +74,7 @@ class Equipment {
     buildingId: json['buildingId'] as String,
     name: json['name'] as String,
     category: EquipmentCategory.values.byName(json['category'] as String),
+    zone: Zone.values.byName(json['zone']),
     controllable: json['controllable'] as bool,
     relayAddress: json['relayAddress'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String),

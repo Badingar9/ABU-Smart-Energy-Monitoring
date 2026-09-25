@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:scada_app/data/config/facilities_catalog.dart';
 import 'package:scada_app/models/alerts.dart';
 
 import '../../core/constants/simulation_constants.dart';
@@ -75,6 +76,7 @@ class FakeDataProvider implements DataProvider {
       name: 'AC — Office 3',
       category: EquipmentCategory.ac,
       controllable: true,
+      zone: Zone.office,
       relayAddress: 'coil-101',
       basePowerKw: 3.2,
     );
@@ -83,6 +85,7 @@ class FakeDataProvider implements DataProvider {
       name: 'Fans — Room 12',
       category: EquipmentCategory.fan,
       controllable: true,
+      zone: Zone.laboratory,
       relayAddress: 'coil-102',
       basePowerKw: 0.8,
     );
@@ -91,6 +94,7 @@ class FakeDataProvider implements DataProvider {
       name: 'Socket — Office 7',
       category: EquipmentCategory.socket,
       controllable: true,
+      zone: Zone.laboratory,
       relayAddress: 'coil-103',
       basePowerKw: 0.5,
     );
@@ -100,6 +104,7 @@ class FakeDataProvider implements DataProvider {
       name: 'Lighting — Ground Floor',
       category: EquipmentCategory.lighting,
       controllable: true,
+      zone: Zone.office,
       relayAddress: 'coil-201',
       basePowerKw: 60.0,
     );
@@ -107,6 +112,7 @@ class FakeDataProvider implements DataProvider {
       buildingId: officeComplex.id,
       name: 'Sockets — Admin Wing',
       category: EquipmentCategory.socket,
+      zone: Zone.office,
       controllable: true,
       relayAddress: 'coil-202',
       basePowerKw: 120.0,
@@ -115,6 +121,7 @@ class FakeDataProvider implements DataProvider {
       buildingId: officeComplex.id,
       name: 'AC — Server Room',
       category: EquipmentCategory.ac,
+      zone: Zone.office,
       controllable: true,
       relayAddress: 'coil-203',
       basePowerKw: 180.0,
@@ -123,6 +130,7 @@ class FakeDataProvider implements DataProvider {
       buildingId: officeComplex.id,
       name: 'Elevator',
       category: EquipmentCategory.other,
+      zone: Zone.office,
       controllable: true,
       relayAddress: 'coil-204',
       basePowerKw: 52.5,
@@ -131,6 +139,7 @@ class FakeDataProvider implements DataProvider {
       buildingId: lectureHall.id,
       name: 'Lighting — Hall',
       category: EquipmentCategory.lighting,
+      zone: Zone.lectureHall,
       controllable: true,
       relayAddress: 'coil-301',
       basePowerKw: 20.0,
@@ -139,6 +148,7 @@ class FakeDataProvider implements DataProvider {
       buildingId: lectureHall.id,
       name: 'Projector & AV',
       category: EquipmentCategory.other,
+      zone: Zone.lectureHall,
       controllable: true,
       relayAddress: 'coil-302',
       basePowerKw: 8.8,
@@ -147,6 +157,7 @@ class FakeDataProvider implements DataProvider {
       buildingId: lectureHall.id,
       name: 'Ceiling Fans',
       category: EquipmentCategory.fan,
+      zone: Zone.lectureHall,
       controllable: true,
       relayAddress: 'coil-303',
       basePowerKw: 14.0,
@@ -155,6 +166,7 @@ class FakeDataProvider implements DataProvider {
       buildingId: lectureHall.id,
       name: 'Sockets',
       category: EquipmentCategory.socket,
+      zone: Zone.lectureHall,
       controllable: true,
       relayAddress: 'coil-304',
       basePowerKw: 50.0,
@@ -165,6 +177,7 @@ class FakeDataProvider implements DataProvider {
     required String buildingId,
     required String name,
     required EquipmentCategory category,
+    required Zone zone,
     required double basePowerKw,
     bool controllable = false,
     String? relayAddress,
@@ -174,6 +187,7 @@ class FakeDataProvider implements DataProvider {
       buildingId: buildingId,
       name: name,  
       category: category,
+      zone: zone,
       controllable: controllable,
       relayAddress: relayAddress,
       createdAt: DateTime.now(),
@@ -483,5 +497,23 @@ class FakeDataProvider implements DataProvider {
       acknowledgedAt: DateTime.now(),
       acknowledgedBy: acknowledgedBy,
     );
+  }
+
+  @override
+  List<FacilitiesSpec> getFacilities() {
+    // TODO: implement getFacilities
+    throw UnimplementedError();
+  }
+
+  @override
+  List<FacilitiesSpec> getFacilitiesForBuilding(String buildingId) {
+    // TODO: implement getFacilitiesForBuilding
+    throw UnimplementedError();
+  }
+
+  @override
+  List<Equipment> getEquipmentsForFacilities(String zone) {
+    // TODO: implement getEquipmentsForFacilities
+    throw UnimplementedError();
   }
 }

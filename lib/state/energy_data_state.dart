@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:scada_app/data/config/facilities_catalog.dart';
 
 import '../data/repositories/energy_data_repository.dart';
 import '../models/building.dart';
@@ -15,20 +16,28 @@ class EnergyDataState extends ChangeNotifier {
   EnergyDataState(this._repository)
     : _thresholdService = ThresholdService(_repository) {
     _buildings = _repository.getBuildings();
+    _facilities = _repository.getFacilities();
     _subscription = _repository.watchReadings().listen(_onReading);
   }
 
   final EnergyDataRepository _repository;
   final ThresholdService _thresholdService;
   late final List<Building> _buildings;
+  late final List<FacilitiesSpec> _facilities;
   late final StreamSubscription<EnergyReading> _subscription;
 
   final Map<String, EnergyReading> _latestReadingByEquipment = {};
 
   List<Building> get buildings => _buildings;
+  List<FacilitiesSpec> get facilities => _facilities;
 
-  List<Equipment> equipmentsFor(String buildingId) =>
+  List<FacilitiesSpec> facilitiesFor(String buildingId) => _repository.getFacilitiesForBuilding(buildingId);
+  
+
+  List<Equipment> equipmentsForBuilding(String buildingId) =>
       _repository.getEquipmentsForBuilding(buildingId);
+  List<Equipment> equipmentsForFacility(String facilityId) =>
+      _repository.getEquipmentsForFacilities(facilityId);
 
   EnergyReading? latestReadingFor(String equipmentId) =>
       _latestReadingByEquipment[equipmentId];
@@ -58,7 +67,7 @@ class EnergyDataState extends ChangeNotifier {
   /// plutôt que par équipement individuel.
   double totalActivePowerForBuilding(String buildingId) {
     double total = 0;
-    for (final equipment in equipmentsFor(buildingId)) {
+    for (final equipment in equipmentsForBuilding(buildingId)) {
       total += latestReadingFor(equipment.id)?.energyKwh ?? 0;
     }
     return total;
@@ -69,7 +78,7 @@ class EnergyDataState extends ChangeNotifier {
   /// de chaque équipement du bâtiment, tronqués à la longueur commune la
   /// plus courte pour rester alignés dans le temps.
   List<double> buildingPowerTrend(String buildingId, {int points = 20}) {
-    final histories = equipmentsFor(
+    final histories = equipmentsForBuilding(
       buildingId,
     ).map((e) => historyFor(e.id)).where((h) => h.isNotEmpty).toList();
     if (histories.isEmpty) return const [];
@@ -92,7 +101,7 @@ class EnergyDataState extends ChangeNotifier {
 
   /// Facteur de puissance moyen des équipements actifs d'un bâtiment.
   double? averagePowerFactorForBuilding(String buildingId) {
-    final factors = equipmentsFor(buildingId)
+    final factors = equipmentsForBuilding(buildingId)
         .map((e) => latestReadingFor(e.id)?.powerFactor)
         .whereType<double>()
         .toList();
@@ -100,9 +109,27 @@ class EnergyDataState extends ChangeNotifier {
     return factors.reduce((a, b) => a + b) / factors.length;
   }
 
-  Building? findBuildingForEquipment(String equipmentId) {
+  Building? findBuildingForEquipment(String buildingId) {
     for (final building in _buildings) {
-      if (equipmentsFor(building.id).any((e) => e.id == equipmentId)) {
+      if (equipmentsForBuilding(building.id).any((e) => e.buildingId == buildingId )) {
+        return building;
+      }
+      
+    }
+    return null;
+  }
+  FacilitiesSpec? findFacilityForEquipment(String facilityId) {
+    for (final facility in _facilities) {
+      if (equipmentsForFacility(facility.zone.toString()).any((e) => e.zone.toString() == facilityId)) {
+        return facility;
+      }
+      
+    }
+    return null;
+  }
+  Building? findBuildingForFacility(String facilityId) {
+    for (final building in _buildings) {
+      if (facilitiesFor(building.id).any((e) => e.id == facilityId)) {
         return building;
       }
     }

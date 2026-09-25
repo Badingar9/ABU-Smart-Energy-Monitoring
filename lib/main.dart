@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:scada_app/core/theme/app_colors.dart';
 import 'package:scada_app/data/modbus/modbus_tcp_client.dart';
 import 'package:scada_app/data/providers/data_provider.dart';
+import 'package:scada_app/data/providers/fake_data_provider.dart';
 import 'package:scada_app/data/providers/real_data_provider.dart';
 import 'package:scada_app/state/settings_state.dart';
 import 'package:scada_app/state/user_state.dart';

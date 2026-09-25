@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:modbus_client/modbus_client.dart';
 import 'package:scada_app/core/errors/data_provider_exception.dart';
 import 'package:scada_app/core/utils/id_generator.dart';
+import 'package:scada_app/data/config/equipment_catalog.dart';
+import 'package:scada_app/data/config/facilities_catalog.dart';
 import 'package:scada_app/data/modbus/equipement_registers.dart';
 import 'package:scada_app/data/modbus/modbus_tcp_client.dart';
 import 'package:scada_app/data/providers/data_provider.dart';
@@ -32,6 +34,7 @@ class RealDataProvider implements DataProvider {
   static const _maxHistoryPoints = 3600;
 
   final List<Building> _buildings = [];
+  final List<FacilitiesSpec> _facilities = [];
   final List<Equipment> _equipments = [];
   final List<ThresholdConfig> _thresholds = [];
   final List<Alert> _alerts = [];
@@ -53,71 +56,81 @@ class RealDataProvider implements DataProvider {
   void _seedBuildingsAndEquipments() {
     final now = DateTime.now();
 
-    final scienceLab = Building(
-      id: 'b-002',
-      name: 'Science Lab',
-      type: BuildingType.laboratory,
-      createdAt: now,
-    );
-
-    final officeComplex = Building(
-      id: 'b-003',
-      name: 'Office Complex',
-      type: BuildingType.office,
-      createdAt: now,
-    );
-
-    _buildings.addAll([scienceLab, officeComplex]);
+    //==============Add Buildings===================
+    for (final b in kBuildingCatalog) {
+      _buildings.add(
+        Building(id: b.id, name: b.name, type: b.type, createdAt: now),
+      );
+    }
 
     _addEquipment(
-      buildingId: scienceLab.id,
-      name: 'AC Office 3',
+      buildingId: 'b-cpe',
+      name: 'AC Office 1',
       category: EquipmentCategory.ac,
+      zone: Zone.office,
       controllable: true,
       relayAddress: 'coil-101',
       label: 'AC Office 3',
       baseAddress: acOffice3BaseAddress,
       nominalPowerKw: 1.5,
     );
-
     _addEquipment(
-      buildingId: scienceLab.id,
-      name: 'Fans Room 12',
+      buildingId: 'b-cpe',
+      name: 'Fans Lecture Hall 1',
       category: EquipmentCategory.fan,
+      zone: Zone.lectureHall,
       controllable: true,
       relayAddress: 'coil-102',
-      label: 'Fans Room 12',
+      label: 'Fans Lecture Hall 1',
       baseAddress: fansRoom12BaseAddress,
       nominalPowerKw: 0.25,
     );
 
     _addEquipment(
-      buildingId: scienceLab.id,
-      name: 'Socket Office 7',
+      buildingId: 'b-cpe',
+      name: 'Socket Lab',
       category: EquipmentCategory.socket,
       controllable: true,
+      zone: Zone.laboratory,
       relayAddress: 'coil-103',
-      label: 'Socket Office 7',
+      label: 'Socket Lab',
       baseAddress: socketOffice7BaseAddress,
       nominalPowerKw: 0.4,
     );
 
     _addEquipment(
-      buildingId: officeComplex.id,
+      buildingId: 'b-cpe',
       name: 'Lighting Ground Floor',
       category: EquipmentCategory.lighting,
+      zone: Zone.lectureHall,
       controllable: true,
       relayAddress: 'coil-201',
       label: 'Lighting Ground Floor',
       baseAddress: lightingGroundFloorBaseAddress,
       nominalPowerKw: 0.65,
     );
+    _addEquipment(
+      buildingId: 'b-cpe',
+      name: 'Lighting Second Floor',
+      category: EquipmentCategory.lighting,
+      zone: Zone.lectureHall,
+      controllable: true,
+      relayAddress: 'coil-202',
+      label: 'Lighting Second Floor',
+      baseAddress: lightingGroundFloorBaseAddress,
+      nominalPowerKw: 0.65,
+    );
+
+    _createFacility();
   }
+
+  //=======Facilities function to add
 
   void _addEquipment({
     required String buildingId,
     required String name,
     required EquipmentCategory category,
+    required Zone zone,
     required bool controllable,
     required String relayAddress,
     required String label,
@@ -129,6 +142,7 @@ class RealDataProvider implements DataProvider {
       buildingId: buildingId,
       name: name,
       category: category,
+      zone: zone,
       controllable: controllable,
       relayAddress: relayAddress,
       createdAt: DateTime.now(),
@@ -141,6 +155,35 @@ class RealDataProvider implements DataProvider {
       label,
       baseAddress,
     );
+  }
+
+  void _createFacility() {
+    _facilities.clear();
+
+    for (final zone in Zone.values) {
+      final equipmentForZone = _equipments
+          .where((equipment) => equipment.zone == zone)
+          .toList(growable: false);
+
+      if (equipmentForZone.isEmpty) {
+        continue;
+      }
+
+      final buildingId = equipmentForZone.first.buildingId;
+
+      _facilities.add(
+        FacilitiesSpec(
+          id: '$buildingId-${zone.name}',
+          title: '$zone',
+          buildingSpecId: buildingId,
+          zone: zone,
+          equipments: equipmentForZone,
+        ),
+      );
+      for (final f in _facilities) {
+        print("Facility:${f.title}");
+      }
+    }
   }
 
   //=========Modbus Polling==============
@@ -158,7 +201,6 @@ class RealDataProvider implements DataProvider {
     _isPolling = true;
 
     try {
-      print('>>>> Polling OpenPLC for readings...');
       final listOfAllRegisters = _registersByEquipmentId.values
           .expand((registers) => registers.allRegisters)
           .toList();
@@ -167,7 +209,7 @@ class RealDataProvider implements DataProvider {
         listOfAllRegisters,
       );
 
-    if(_disposed) return;
+      if (_disposed) return;
 
       if (responseCode != ModbusResponseCode.requestSucceed) {
         throw DataProviderException(
@@ -185,7 +227,6 @@ class RealDataProvider implements DataProvider {
   }
 
   void _processReadings() {
-    print('>>>> _processReadings called');
 
     for (final entry in _registersByEquipmentId.entries) {
       final equipmentId = entry.key;
@@ -206,14 +247,16 @@ class RealDataProvider implements DataProvider {
       final reactivePower = registers.reactivePower.value?.toDouble();
       final powerFactor = registers.powerFactor.value?.toDouble();
 
-      print('------------------------------');
-      print('Equipment ID: $equipmentId');
-      print('Equipment name: ${equipment.name}');
-      print('Voltage: $voltage V');
-      print('Current: $current A');
-      print('Active Power: $activePower kW');
-      print('Reactive Power: $reactivePower kVAR');
-      print('Power Factor: $powerFactor');
+      // print('------------------------------');
+      // print('Equipment ID: $equipmentId');
+      // print('Equipment name: ${equipment.name}');
+      // print('Equipment zone: ${equipment.zone}');
+      // print('Equipment type: ${equipment.buildingId}');
+      // print('Voltage: $voltage V');
+      // print('Current: $current A');
+      // print('Active Power: $activePower kW');
+      // print('Reactive Power: $reactivePower kVAR');
+      // print('Power Factor: $powerFactor');
 
       if (voltage == null ||
           current == null ||
@@ -241,7 +284,6 @@ class RealDataProvider implements DataProvider {
         timestamp: DateTime.now(),
       );
 
-      print('>>> Calculated energy: ${reading.energyKwh} kWh');
 
       _historyByEquipment[equipmentId]!.add(reading);
 
@@ -250,18 +292,14 @@ class RealDataProvider implements DataProvider {
         h.removeRange(0, h.length - _maxHistoryPoints);
       }
 
-      print(
-        '>>> History size: '
-        '${_historyByEquipment[equipmentId]!.length}',
-      );
+   
 
       _evaluateThresholds(equipment, reading);
 
       _readingsController.add(reading);
 
-      print('>>> Reading sent to Stream');
     }
-    print('========== END POLL ==========\n');
+   
   }
 
   double _calculateEnergy(String equipmentId, double activePower) {
@@ -271,13 +309,15 @@ class RealDataProvider implements DataProvider {
       return 0;
     }
     final previous = history.last;
-    final elapsedHours =
-        DateTime.now().difference(previous.timestamp).inMilliseconds;
-        if(elapsedHours > 5000){
-          return previous.energyKwh;
-        }
+    final elapsedHours = DateTime.now()
+        .difference(previous.timestamp)
+        .inMilliseconds;
+    if (elapsedHours > 5000) {
+      return previous.energyKwh;
+    }
 
-    return previous.energyKwh + (activePower * elapsedHours)/3600000; // Convert milliseconds to hours
+    return previous.energyKwh +
+        (activePower * elapsedHours) / 3600000; // Convert milliseconds to hours
   }
 
   //============Thresholds=================
@@ -296,8 +336,7 @@ class RealDataProvider implements DataProvider {
         ),
       );
 
-      final nominalPowerKw =
-          _nominalPowerKwByEquipmentId[equipment.id] ?? 0.0;
+      final nominalPowerKw = _nominalPowerKwByEquipmentId[equipment.id] ?? 0.0;
 
       _thresholds.add(
         ThresholdConfig(
@@ -534,5 +573,22 @@ class RealDataProvider implements DataProvider {
     _pollingTimer?.cancel();
     _readingsController.close();
     _modbusClient.disconnect();
+  }
+
+  @override
+  List<FacilitiesSpec> getFacilities() {
+    return List.unmodifiable(_facilities);
+  }
+
+  @override
+  List<FacilitiesSpec> getFacilitiesForBuilding(String buildingId) {
+    return _facilities
+        .where((facility) => facility.buildingSpecId == buildingId)
+        .toList();
+  }
+
+  @override
+  List<Equipment> getEquipmentsForFacilities(String zone) {
+    return _equipments.where((e) => e.zone.toString() == zone).toList();
   }
 }

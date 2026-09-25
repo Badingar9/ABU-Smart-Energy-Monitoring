@@ -18,6 +18,10 @@ class AdminBuildingsTab extends StatelessWidget {
         return Icons.school;
       case BuildingType.laboratory:
         return Icons.engineering;
+      case BuildingType.department:
+        return Icons.business;
+      case BuildingType.faculty:
+        return Icons.business;
     }
   }
 
@@ -61,7 +65,7 @@ class AdminBuildingsTab extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final building = energy.buildings[index];
-                final equipments = energy.equipmentsFor(building.id);
+                final equipments = energy.equipmentsForBuilding(building.id);
 
                 return Container(
                   padding: const EdgeInsets.all(16),

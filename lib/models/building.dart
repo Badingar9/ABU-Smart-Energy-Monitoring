@@ -1,4 +1,5 @@
-enum BuildingType { office, classroom, laboratory }
+enum BuildingType { office, classroom, laboratory, department, faculty }
+
 
 class Building {
   final String id;

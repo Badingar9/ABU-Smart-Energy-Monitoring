@@ -104,7 +104,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                                         alert.equipmentId,
                                       );
                                   final equipment = energy
-                                      .equipmentsFor(building?.id ?? '')
+                                      .equipmentsForBuilding(building?.id ?? '')
                                       .firstWhereOrNull(
                                         (e) => e.id == alert.equipmentId,
                                       );
@@ -145,7 +145,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                             selectedAlert.equipmentId,
                           );
                           final equipment = energy
-                              .equipmentsFor(building?.id ?? '')
+                              .equipmentsForBuilding(building?.id ?? '')
                               .firstWhereOrNull(
                                 (e) => e.id == selectedAlert.equipmentId,
                               );

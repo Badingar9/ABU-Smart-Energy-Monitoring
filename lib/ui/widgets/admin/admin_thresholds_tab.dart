@@ -22,7 +22,7 @@ class AdminThresholdsTab extends StatelessWidget {
         for (final building in energy.buildings) ...[
           Text(building.name, style: AppTypography.headlineMd),
           const SizedBox(height: 12),
-          for (final equipment in energy.equipmentsFor(building.id)) ...[
+          for (final equipment in energy.equipmentsForBuilding(building.id)) ...[
             Text(
               equipment.name,
               style: AppTypography.bodyMd.copyWith(

@@ -47,7 +47,7 @@ class ActionLogTab extends StatelessWidget {
         final action = sorted[index];
         final building = energy.findBuildingForEquipment(action.equipmentId);
         final equipment = energy
-            .equipmentsFor(building?.id ?? '')
+            .equipmentsForBuilding(building?.id ?? '')
             .firstWhereOrNull((e) => e.id == action.equipmentId);
         final isDisconnect = action.actionType == ControlActionType.disconnect;
 

@@ -1,3 +1,4 @@
+import 'package:scada_app/data/config/facilities_catalog.dart';
 import 'package:scada_app/models/alerts.dart';
 
 import '../../models/building.dart';
@@ -12,8 +13,12 @@ import '../../models/control_action.dart';
 /// code (UC-07 du SRS).
 abstract class DataProvider {
   List<Building> getBuildings();
+  List<FacilitiesSpec> getFacilities();
+
+  List<FacilitiesSpec> getFacilitiesForBuilding(String buildingId);
 
   List<Equipment> getEquipmentsForBuilding(String buildingId);
+  List<Equipment> getEquipmentsForFacilities(String zone);
 
   /// Flux continu de nouvelles mesures, tous équipements confondus.
   Stream<EnergyReading> watchReadings();

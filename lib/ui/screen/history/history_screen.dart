@@ -50,7 +50,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         builder: (context, energy, _) {
           final buildings = energy.buildings;
           _buildingId ??= buildings.isNotEmpty ? buildings.first.id : null;
-          final equipments = energy.equipmentsFor(_buildingId ?? '');
+          final equipments = energy.equipmentsForBuilding(_buildingId ?? '');
           if (_equipmentId == null ||
               !equipments.any((e) => e.id == _equipmentId)) {
             _equipmentId = equipments.isNotEmpty ? equipments.first.id : null;

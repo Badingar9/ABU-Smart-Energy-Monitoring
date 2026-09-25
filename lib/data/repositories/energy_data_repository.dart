@@ -1,3 +1,5 @@
+import 'package:scada_app/data/config/facilities_catalog.dart';
+
 import '../../models/building.dart';
 import '../../models/control_action.dart';
 import '../../models/energy_reading.dart';
@@ -15,8 +17,14 @@ class EnergyDataRepository {
 
   List<Building> getBuildings() => _provider.getBuildings();
 
+  List<FacilitiesSpec> getFacilities() => _provider.getFacilities();
+
+  List<FacilitiesSpec> getFacilitiesForBuilding(String buildingId) => _provider.getFacilitiesForBuilding(buildingId);
+
   List<Equipment> getEquipmentsForBuilding(String buildingId) =>
       _provider.getEquipmentsForBuilding(buildingId);
+  List<Equipment> getEquipmentsForFacilities(String facilityId) =>
+      _provider.getEquipmentsForFacilities(facilityId);
 
   Stream<EnergyReading> watchReadings() => _provider.watchReadings();
 
