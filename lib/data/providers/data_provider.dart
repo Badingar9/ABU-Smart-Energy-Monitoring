@@ -18,7 +18,7 @@ abstract class DataProvider {
   List<FacilitiesSpec> getFacilitiesForBuilding(String buildingId);
 
   List<Equipment> getEquipmentsForBuilding(String buildingId);
-  List<Equipment> getEquipmentsForFacilities(String zone);
+  List<Equipment> getEquipmentsForFacility(String facilityId);
 
   /// Flux continu de nouvelles mesures, tous équipements confondus.
   Stream<EnergyReading> watchReadings();

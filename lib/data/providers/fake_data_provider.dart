@@ -512,7 +512,7 @@ class FakeDataProvider implements DataProvider {
   }
 
   @override
-  List<Equipment> getEquipmentsForFacilities(String zone) {
+  List<Equipment> getEquipmentsForFacility(String zone) {
     // TODO: implement getEquipmentsForFacilities
     throw UnimplementedError();
   }

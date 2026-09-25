@@ -185,106 +185,93 @@ class _BuildingListPanelState extends State<BuildingListPanel> {
     );
   }
 
- Widget _buildingFacilities(String buildingId) {
-  final buildingFacilities = widget.facilities
-      .where((facility) => facility.buildingSpecId == buildingId)
-      .toList(growable: false);
+  Widget _buildingFacilities(String buildingId) {
+    final buildingFacilities = widget.facilities
+        .where((facility) => facility.buildingSpecId == buildingId)
+        .toList(growable: false);
 
-  return Padding(
-    padding: const EdgeInsets.only(left: 20),
-    child: Column(
-      children: buildingFacilities.map((facility) {
-        final isSelected = facility.id == widget.selectedFacilityId;
+    return Padding(
+      padding: const EdgeInsets.only(left: 20),
+      child: Column(
+        children: buildingFacilities.map((facility) {
+          final isSelected = facility.id == widget.selectedFacilityId;
 
-        final facilityEquipments =
-            widget.energy.equipmentsForFacility(facility.zone.toString());
-            print(facilityEquipments.first.name);
+          final facilityEquipments = widget.energy.equipmentsForFacility(
+            facility.id,
+          );
 
-        final equipmentIds = facilityEquipments
-            .map((e) => e.id)
-            .toSet();
-           
+          final equipmentIds = facilityEquipments.map((e) => e.id).toSet();
 
-            
+          final hasCritical = widget.alertsState.activeAlerts.any(
+            (a) =>
+                equipmentIds.contains(a.equipmentId) &&
+                a.severity == AlertSeverity.critical,
+          );
 
-        final hasCritical = widget.alertsState.activeAlerts.any(
-          (a) =>
-              equipmentIds.contains(a.equipmentId) &&
-              a.severity == AlertSeverity.critical,
-        );
+          final hasWarning = widget.alertsState.activeAlerts.any(
+            (a) =>
+                equipmentIds.contains(a.equipmentId) &&
+                a.severity == AlertSeverity.warning,
+          );
 
-        final hasWarning = widget.alertsState.activeAlerts.any(
-          (a) =>
-              equipmentIds.contains(a.equipmentId) &&
-              a.severity == AlertSeverity.warning,
-        );
+          final statusColor = hasCritical
+              ? AppColors.statusCritical
+              : hasWarning
+              ? AppColors.statusWarning
+              : AppColors.statusSuccess;
 
-        final statusColor = hasCritical
-            ? AppColors.statusCritical
-            : hasWarning
-                ? AppColors.statusWarning
-                : AppColors.statusSuccess;
-
-        return InkWell(
-          onTap: () {
-            widget.onSelect(facility.id);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 9,
-            ),
-            color: isSelected
-                ? AppColors.primaryContainer.withValues(alpha: 0.08)
-                : Colors.transparent,
-            child: Row(
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-
-                Icon(
-                  Icons.meeting_room_outlined,
-                  size: 17,
-                  color: AppColors.onSurfaceVariant,
-                ),
-
-                const SizedBox(width: 8),
-
-                Expanded(
-                  child: Text(
-                    facility.zone.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodyMd.copyWith(
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.onSurface,
+          return InkWell(
+            onTap: () {
+              widget.onSelectFacility(facility.id);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              color: isSelected
+                  ? AppColors.primaryContainer.withValues(alpha: 0.08)
+                  : Colors.transparent,
+              child: Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                ),
+                  //-------------------------------------
+                  //>>>>Ajouter Icon pour les facilities
+                  //-------------------------------------
 
-                Text(
-                  facilityEquipments.first.name,
-                  style: AppTypography.labelData.copyWith(
-                    fontSize: 12,
+                  const SizedBox(width: 8),
+
+                  Expanded(
+                    child: Text(
+                      facility.zone.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodyMd.copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.onSurface,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+
+                  Text(
+                    '${facilityEquipments.length}',
+                    style: AppTypography.labelData.copyWith(fontSize: 12),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      }).toList(),
-    ),
-  );
-}
+          );
+        }).toList(),
+      ),
+    );
+  }
 }

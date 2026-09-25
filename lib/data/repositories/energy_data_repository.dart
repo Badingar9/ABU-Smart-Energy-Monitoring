@@ -23,8 +23,8 @@ class EnergyDataRepository {
 
   List<Equipment> getEquipmentsForBuilding(String buildingId) =>
       _provider.getEquipmentsForBuilding(buildingId);
-  List<Equipment> getEquipmentsForFacilities(String facilityId) =>
-      _provider.getEquipmentsForFacilities(facilityId);
+  List<Equipment> getEquipmentsForFacility(String facilityId) =>
+      _provider.getEquipmentsForFacility(facilityId);
 
   Stream<EnergyReading> watchReadings() => _provider.watchReadings();
 

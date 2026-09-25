@@ -160,30 +160,28 @@ class RealDataProvider implements DataProvider {
   void _createFacility() {
     _facilities.clear();
 
-    for (final zone in Zone.values) {
-      final equipmentForZone = _equipments
-          .where((equipment) => equipment.zone == zone)
-          .toList(growable: false);
+    final grouped = <String, List<Equipment>>{};
 
-      if (equipmentForZone.isEmpty) {
-        continue;
+    for (final eq in _equipments) {
+      final key = '${eq.buildingId}-${eq.zone.name}';
+      grouped.putIfAbsent(key, () => []).add(eq);
       }
 
-      final buildingId = equipmentForZone.first.buildingId;
+      for (final entry in grouped.entries) {
+        final equipments = entry.value;
+        final firstEquipment = equipments.first;
 
-      _facilities.add(
-        FacilitiesSpec(
-          id: '$buildingId-${zone.name}',
-          title: '$zone',
-          buildingSpecId: buildingId,
-          zone: zone,
-          equipments: equipmentForZone,
-        ),
-      );
-      for (final f in _facilities) {
-        print("Facility:${f.title}");
+        _facilities.add(
+          FacilitiesSpec(
+            id: '${firstEquipment.buildingId}-${firstEquipment.zone.name}',
+            title: firstEquipment.zone.name,
+            buildingSpecId: firstEquipment.buildingId,
+            zone: firstEquipment.zone,
+            equipments: List.unmodifiable(equipments),
+          ),
+        );
       }
-    }
+    
   }
 
   //=========Modbus Polling==============
@@ -227,7 +225,6 @@ class RealDataProvider implements DataProvider {
   }
 
   void _processReadings() {
-
     for (final entry in _registersByEquipmentId.entries) {
       final equipmentId = entry.key;
       final registers = entry.value;
@@ -284,7 +281,6 @@ class RealDataProvider implements DataProvider {
         timestamp: DateTime.now(),
       );
 
-
       _historyByEquipment[equipmentId]!.add(reading);
 
       final h = _historyByEquipment[equipmentId]!;
@@ -292,14 +288,10 @@ class RealDataProvider implements DataProvider {
         h.removeRange(0, h.length - _maxHistoryPoints);
       }
 
-   
-
       _evaluateThresholds(equipment, reading);
 
       _readingsController.add(reading);
-
     }
-   
   }
 
   double _calculateEnergy(String equipmentId, double activePower) {
@@ -588,7 +580,15 @@ class RealDataProvider implements DataProvider {
   }
 
   @override
-  List<Equipment> getEquipmentsForFacilities(String zone) {
-    return _equipments.where((e) => e.zone.toString() == zone).toList();
+  List<Equipment> getEquipmentsForFacility(String facilityId) {
+    final facility = _facilities.firstWhere((f) => f.id == facilityId);
+
+    return _equipments
+        .where(
+          (eq) =>
+              eq.buildingId == facility.buildingSpecId &&
+              eq.zone == facility.zone,
+        )
+        .toList(growable: false);
   }
 }

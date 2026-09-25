@@ -37,7 +37,7 @@ class EnergyDataState extends ChangeNotifier {
   List<Equipment> equipmentsForBuilding(String buildingId) =>
       _repository.getEquipmentsForBuilding(buildingId);
   List<Equipment> equipmentsForFacility(String facilityId) =>
-      _repository.getEquipmentsForFacilities(facilityId);
+      _repository.getEquipmentsForFacility(facilityId);
 
   EnergyReading? latestReadingFor(String equipmentId) =>
       _latestReadingByEquipment[equipmentId];
@@ -118,15 +118,29 @@ class EnergyDataState extends ChangeNotifier {
     }
     return null;
   }
-  FacilitiesSpec? findFacilityForEquipment(String facilityId) {
-    for (final facility in _facilities) {
-      if (equipmentsForFacility(facility.zone.toString()).any((e) => e.zone.toString() == facilityId)) {
-        return facility;
-      }
-      
-    }
-    return null;
-  }
+  
+//   FacilitiesSpec? findFacilityForEquipment(String equipmentId) {
+//   final equipment = _repository
+//       .getEquipmentsForBuilding(
+//         _buildings
+//             .expand((building) => equipmentsForBuilding(building.id))
+//             .firstWhereOrNull((e) => e.id == equipmentId)
+//             ?.buildingId ??
+//             '',
+//       )
+//       .firstWhereOrNull((e) => e.id == equipmentId);
+
+//   if (equipment == null) {
+//     return null;
+//   }
+
+//   return _facilities.firstWhereOrNull(
+//     (facility) =>
+//         facility.buildingSpecId == equipment.buildingId &&
+//         facility.zone == equipment.zone,
+//   );
+// }
+  
   Building? findBuildingForFacility(String facilityId) {
     for (final building in _buildings) {
       if (facilitiesFor(building.id).any((e) => e.id == facilityId)) {

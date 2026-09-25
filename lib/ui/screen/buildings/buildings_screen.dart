@@ -33,7 +33,6 @@ class _BuildingsScreenState extends State<BuildingsScreen>
     with SingleTickerProviderStateMixin {
   String? _selectedBuildingId;
   String? _selectedFacilityId;
-  String? _selectedFacilityZone;
   String? _selectedEquipmentIdForHistory;
   late final TabController _tabController = TabController(
     length: 3,
@@ -42,11 +41,9 @@ class _BuildingsScreenState extends State<BuildingsScreen>
 
   //Get all selected equipment
   List<Equipment> _selectedEquipments(EnergyDataState energy) {
-    if (_selectedFacilityZone != null) {
-      print(
-        ">>>Selected facility==> ${energy.equipmentsForFacility(_selectedFacilityZone!).length}",
-      );
-      return energy.equipmentsForFacility(_selectedFacilityZone!);
+    if (_selectedFacilityId != null) {
+     
+      return energy.equipmentsForFacility(_selectedFacilityId!);
     }
 
     if (_selectedBuildingId != null) {
@@ -80,16 +77,11 @@ class _BuildingsScreenState extends State<BuildingsScreen>
           );
 
           final facilitiesList = energy.facilities;
-          _selectedFacilityId ??= facilitiesList.isNotEmpty
-              ? facilitiesList.first.id
-              : null;
-          _selectedFacilityZone ??= facilitiesList.isNotEmpty
-              ? facilitiesList.first.zone.toString()
-              : null;
+          print('>>>List of Facilities: ${facilitiesList.length}');
+          
+         _selectedFacilityId == null;
 
-          final selectedFacility = facilitiesList.firstWhereOrNull(
-            (f) => f.zone.toString() == _selectedFacilityZone,
-          );
+          
 
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -164,7 +156,6 @@ class _BuildingsScreenState extends State<BuildingsScreen>
                                   energy,
                                   controlState,
                                   selectedBuilding.id,
-                                  selectedFacility!.zone.toString(),
                                   technician,
                                 ),
                                 _buildHistoryTab(energy, selectedBuilding.id),
@@ -190,7 +181,6 @@ class _BuildingsScreenState extends State<BuildingsScreen>
     EnergyDataState energy,
     ControlState controlState,
     String buildingId,
-    String facilityZone,
     AppUser? technician,
   ) {
     final equipments = _selectedEquipments(energy);
