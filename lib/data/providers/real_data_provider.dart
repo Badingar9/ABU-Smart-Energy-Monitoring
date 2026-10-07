@@ -244,16 +244,7 @@ class RealDataProvider implements DataProvider {
       final reactivePower = registers.reactivePower.value?.toDouble();
       final powerFactor = registers.powerFactor.value?.toDouble();
 
-      // print('------------------------------');
-      // print('Equipment ID: $equipmentId');
-      // print('Equipment name: ${equipment.name}');
-      // print('Equipment zone: ${equipment.zone}');
-      // print('Equipment type: ${equipment.buildingId}');
-      // print('Voltage: $voltage V');
-      // print('Current: $current A');
-      // print('Active Power: $activePower kW');
-      // print('Reactive Power: $reactivePower kVAR');
-      // print('Power Factor: $powerFactor');
+      
 
       if (voltage == null ||
           current == null ||
