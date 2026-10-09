@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:modbus_client/modbus_client.dart';
 import 'package:scada_app/core/errors/data_provider_exception.dart';
 import 'package:scada_app/core/utils/id_generator.dart';
+import 'package:scada_app/data/config/circuit_catalog.dart';
 import 'package:scada_app/data/config/equipment_catalog.dart';
 import 'package:scada_app/data/config/facilities_catalog.dart';
 import 'package:scada_app/data/modbus/equipement_registers.dart';
@@ -26,10 +27,20 @@ class RealDataProvider implements DataProvider {
   final StreamController<EnergyReading> _readingsController =
       StreamController<EnergyReading>.broadcast();
 
-  static const acOffice3BaseAddress = 0;
-  static const fansRoom12BaseAddress = 5;
-  static const socketOffice7BaseAddress = 10;
-  static const lightingGroundFloorBaseAddress = 15;
+  static const acOfficeBaseAddress = 0;
+  static const acLibBaseAddress = 5;
+
+  static const fansLabBaseAddress = 40;
+  static const fansLibBaseAddress = 45;
+  
+  static const lightingOfficeBaseAddress = 80;
+  static const lightingLibBaseAddress = 85;
+  static const lightingLabBaseAddress = 90;
+
+  static const socketOfficeBaseAddress = 120;
+  static const socketLibBaseAddress = 125;
+  static const socketLabBaseAddress = 130;
+  
 
   static const _maxHistoryPoints = 3600;
 
@@ -44,6 +55,11 @@ class RealDataProvider implements DataProvider {
   final Map<String, DateTime> _lastResolvedAtByKey = {};
   final Map<String, EquipementRegisters> _registersByEquipmentId = {};
   final Map<String, double> _nominalPowerKwByEquipmentId = {};
+
+
+  /// Circuit OpenPLC (registres + coil) de chaque équipement.
+  /// Servira à écrire le coil dans sendControlCommand.
+  final Map<String, CircuitSpec> _circuitByEquipmentId = {};
 
   Timer? _pollingTimer;
   bool _isPolling = false;
@@ -63,97 +79,35 @@ class RealDataProvider implements DataProvider {
       );
     }
 
-    _addEquipment(
-      buildingId: 'b-cpe',
-      name: 'AC Office 1',
-      category: EquipmentCategory.ac,
-      zone: Zone.office,
-      controllable: true,
-      relayAddress: 'coil-101',
-      label: 'AC Office 3',
-      baseAddress: acOffice3BaseAddress,
-      nominalPowerKw: 1.5,
-    );
-    _addEquipment(
-      buildingId: 'b-cpe',
-      name: 'Fans Lecture Hall 1',
-      category: EquipmentCategory.fan,
-      zone: Zone.lectureHall,
-      controllable: true,
-      relayAddress: 'coil-102',
-      label: 'Fans Lecture Hall 1',
-      baseAddress: fansRoom12BaseAddress,
-      nominalPowerKw: 0.25,
-    );
-
-    _addEquipment(
-      buildingId: 'b-cpe',
-      name: 'Socket Lab',
-      category: EquipmentCategory.socket,
-      controllable: true,
-      zone: Zone.laboratory,
-      relayAddress: 'coil-103',
-      label: 'Socket Lab',
-      baseAddress: socketOffice7BaseAddress,
-      nominalPowerKw: 0.4,
-    );
-
-    _addEquipment(
-      buildingId: 'b-cpe',
-      name: 'Lighting Ground Floor',
-      category: EquipmentCategory.lighting,
-      zone: Zone.lectureHall,
-      controllable: true,
-      relayAddress: 'coil-201',
-      label: 'Lighting Ground Floor',
-      baseAddress: lightingGroundFloorBaseAddress,
-      nominalPowerKw: 0.65,
-    );
-    _addEquipment(
-      buildingId: 'b-cpe',
-      name: 'Lighting Second Floor',
-      category: EquipmentCategory.lighting,
-      zone: Zone.lectureHall,
-      controllable: true,
-      relayAddress: 'coil-202',
-      label: 'Lighting Second Floor',
-      baseAddress: lightingGroundFloorBaseAddress,
-      nominalPowerKw: 0.65,
-    );
-
+    //==============Add Equipments (un par circuit OpenPLC)==============
+    for (final circuit in kCircuitCatalog) {
+      _addEquipment(circuit);
+    }
+ 
     _createFacility();
+
   }
 
   //=======Facilities function to add
 
-  void _addEquipment({
-    required String buildingId,
-    required String name,
-    required EquipmentCategory category,
-    required Zone zone,
-    required bool controllable,
-    required String relayAddress,
-    required String label,
-    required int baseAddress,
-    required double nominalPowerKw,
-  }) {
+  void _addEquipment(CircuitSpec circuit) {
     final equipment = Equipment(
       id: IdGenerator.generate('eq'),
-      buildingId: buildingId,
-      name: name,
-      category: category,
-      zone: zone,
-      controllable: controllable,
-      relayAddress: relayAddress,
+      buildingId: circuit.buildingId,
+      name: circuit.name,
+      category: circuit.category,
+      zone: circuit.zone,
+      controllable: circuit.controllable,
+      relayAddress: 'coil-${circuit.coilAddress}',
       createdAt: DateTime.now(),
     );
 
     _equipments.add(equipment);
     _historyByEquipment[equipment.id] = [];
-    _nominalPowerKwByEquipmentId[equipment.id] = nominalPowerKw;
+    _nominalPowerKwByEquipmentId[equipment.id] = circuit.nominalPowerKw;
     _registersByEquipmentId[equipment.id] = EquipementRegisters(
-      label,
-      baseAddress,
+      circuit.id,
+      circuit.baseRegister,
     );
   }
 
@@ -378,6 +332,8 @@ class RealDataProvider implements DataProvider {
         createdAt: reading.timestamp,
       );
 
+    print('Alert sur : ${alert.equipmentId}');
+    print(_equipments.where((e)=> e.id==alert.equipmentId).first.name);
       _alerts.add(alert);
 
       if (config.autoAction == AutoAction.autoDisconnect &&
@@ -506,7 +462,7 @@ class RealDataProvider implements DataProvider {
     _lastResolvedAtByKey[key] = DateTime.now();
   }
 
-  @override
+    @override
   Future<ControlAction> sendControlCommand({
     required String equipmentId,
     required ControlActionType actionType,
@@ -514,8 +470,36 @@ class RealDataProvider implements DataProvider {
     String? userId,
     String? alertId,
   }) async {
-    if (!_equipments.any((e) => e.id == equipmentId)) {
+    final index = _equipments.indexWhere((e) => e.id == equipmentId);
+    final circuit = _circuitByEquipmentId[equipmentId];
+
+    if (index == -1 || circuit == null) {
       throw DataProviderException('Equipment introuvable pour id=$equipmentId');
+    }
+
+    // Convention PLC : coil = 1 -> circuit coupé, coil = 0 -> circuit normal.
+    final coilValue = actionType == ControlActionType.disconnect;
+
+    ControlResult result;
+    try {
+      final code = await _modbusClient
+          .writeCoil(circuit.coilAddress, coilValue)
+          .timeout(const Duration(seconds: 3));
+
+      result = code == ModbusResponseCode.requestSucceed
+          ? ControlResult.success
+          : ControlResult.failed;
+    } on TimeoutException {
+      result = ControlResult.timeout;
+    } catch (_) {
+      result = ControlResult.failed;
+    }
+
+    // L'état local n'est mis à jour que si le PLC a accepté l'écriture.
+    if (result == ControlResult.success) {
+      _equipments[index] = _equipments[index].copyWith(
+        isConnected: !coilValue,
+      );
     }
 
     final action = ControlAction(
@@ -526,7 +510,7 @@ class RealDataProvider implements DataProvider {
       triggeredBy: triggeredBy,
       userId: userId,
       executedAt: DateTime.now(),
-      result: ControlResult.failed, // TODO : écriture Modbus du coil
+      result: result,
     );
     _controlActions.add(action);
     return action;

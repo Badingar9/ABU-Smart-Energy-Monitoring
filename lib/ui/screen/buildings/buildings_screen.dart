@@ -77,7 +77,6 @@ class _BuildingsScreenState extends State<BuildingsScreen>
           );
 
           final facilitiesList = energy.facilities;
-          print('>>>List of Facilities: ${facilitiesList.length}');
           
          _selectedFacilityId == null;
 

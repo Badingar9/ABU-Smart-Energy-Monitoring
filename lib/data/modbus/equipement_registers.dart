@@ -6,7 +6,7 @@ class EquipementRegisters {
   ): voltage = ModbusUint16Register(
     name : '$label-Voltage',
     address: baseAddress,
-    type: ModbusElementType.inputRegister,
+    type: ModbusElementType.holdingRegister,
     multiplier: 0.1,
     uom: "V",
 
@@ -14,28 +14,28 @@ class EquipementRegisters {
   current = ModbusUint16Register(
     name: '$label-Current', 
     address: baseAddress + 1, 
-    type: ModbusElementType.inputRegister,
+    type: ModbusElementType.holdingRegister,
     multiplier: 0.01,
     uom: "A"
     ),
     activePower = ModbusUint16Register(
       name: '$label-ActivePower', 
       address: baseAddress + 2, 
-      type: ModbusElementType.inputRegister,
+      type: ModbusElementType.holdingRegister,
       multiplier: 0.001,
       uom: 'KW'
     ),
     reactivePower = ModbusUint16Register(
       name: '$label-ReactivePower', 
       address: baseAddress + 3, 
-      type: ModbusElementType.inputRegister,
+      type: ModbusElementType.holdingRegister,
       multiplier: 0.001,
       uom: 'KWAR'
       ),
     powerFactor = ModbusUint16Register(
       name: '$label-PowerFactor', 
       address: baseAddress + 4, 
-      type: ModbusElementType.inputRegister,
+      type: ModbusElementType.holdingRegister,
       multiplier: 0.001,
       uom: ''
       );
